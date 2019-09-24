@@ -424,7 +424,7 @@ class Processor
         $html = '';
         if ($baseTemplate && $contentTemplate) {
             ob_start();
-            require_once $baseTemplate;
+            require $baseTemplate;
             $html = ob_get_clean();
         }
         return $html;
