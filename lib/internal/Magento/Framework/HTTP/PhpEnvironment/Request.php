@@ -608,8 +608,8 @@ class Request extends \Zend\Http\PhpEnvironment\Request
             case isset($this->postParams[$key]):
                 return $this->postParams[$key];
 
-            case isset($_COOKIE[$key]):
-                return $_COOKIE[$key];
+            case $this->getCookie($key) !== null:
+                return $this->getCookie($key);
 
             case ($key == 'REQUEST_URI'):
                 return $this->getRequestUri();
@@ -657,7 +657,7 @@ class Request extends \Zend\Http\PhpEnvironment\Request
             case isset($this->postParams[$key]):
                 return true;
 
-            case isset($_COOKIE[$key]):
+            case $this->getCookie($key) !== null:
                 return true;
 
             case isset($this->serverParams[$key]):
