@@ -114,38 +114,40 @@ class Http implements \Magento\Framework\AppInterface
         /** @var \Magento\Framework\App\FrontControllerInterface $frontController */
         $frontController = $this->_objectManager->get(\Magento\Framework\App\FrontControllerInterface::class);
         $result = $frontController->dispatch($this->_request);
+        $response = $this->_response;
         // TODO: Temporary solution until all controllers return ResultInterface (MAGETWO-28359)
         if ($result instanceof ResultInterface) {
             $this->registry->register('use_page_cache_plugin', true, true);
-            $result->renderResult($this->_response);
+            $result->renderResult($response);
         } elseif ($result instanceof HttpInterface) {
-            $this->_response = $result;
+            $response = $result;
         } else {
             throw new \InvalidArgumentException('Invalid return type');
         }
-        if ($this->_request->isHead() && $this->_response->getHttpResponseCode() == 200) {
-            $this->handleHeadRequest();
+        if ($this->_request->isHead() && $response->getHttpResponseCode() == 200) {
+            $this->handleHeadRequest($response);
         }
         // This event gives possibility to launch something before sending output (allow cookie setting)
-        $eventParams = ['request' => $this->_request, 'response' => $this->_response];
+        $eventParams = ['request' => $this->_request, 'response' => $response];
         $this->_eventManager->dispatch('controller_front_send_response_before', $eventParams);
-        return $this->_response;
+        return $response;
     }
 
     /**
      * Handle HEAD requests by adding the Content-Length header and removing the body from the response.
      *
+     * @param ResponseHttp $response
      * @return void
      */
-    private function handleHeadRequest()
+    private function handleHeadRequest(ResponseHttp $response)
     {
         // It is possible that some PHP installations have overloaded strlen to use mb_strlen instead.
         // This means strlen might return the actual number of characters in a non-ascii string instead
         // of the number of bytes. Use mb_strlen explicitly with a single byte character encoding to ensure
         // that the content length is calculated in bytes.
-        $contentLength = mb_strlen($this->_response->getContent(), '8bit');
-        $this->_response->clearBody();
-        $this->_response->setHeader('Content-Length', $contentLength);
+        $contentLength = mb_strlen($response->getContent(), '8bit');
+        $response->clearBody();
+        $response->setHeader('Content-Length', $contentLength);
     }
 
     /**
