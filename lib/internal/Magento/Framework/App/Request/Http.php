@@ -424,11 +424,8 @@ class Http extends Request implements RequestContentInterface, RequestSafetyInte
     public function isSafeMethod()
     {
         if ($this->isSafeMethod === null) {
-            if (isset($_SERVER['REQUEST_METHOD']) && (in_array($_SERVER['REQUEST_METHOD'], $this->safeRequestTypes))) {
-                $this->isSafeMethod = true;
-            } else {
-                $this->isSafeMethod = false;
-            }
+            $method = $this->getMethod();
+            $this->isSafeMethod = ($method && in_array($method, $this->safeRequestTypes));
         }
         return $this->isSafeMethod;
     }
