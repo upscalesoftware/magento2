@@ -43,6 +43,11 @@ class Validator implements ValidatorInterface
     protected $_remoteAddress;
 
     /**
+     * @var \Magento\Framework\App\Request\Http
+     */
+    protected $request;
+
+    /**
      * @var array
      */
     protected $_skippedAgentList;
@@ -55,17 +60,20 @@ class Validator implements ValidatorInterface
     /**
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress
+     * @param \Magento\Framework\App\Request\Http $request
      * @param string $scopeType
      * @param array $skippedUserAgentList
      */
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress,
+        \Magento\Framework\App\Request\Http $request,
         $scopeType,
         array $skippedUserAgentList = []
     ) {
         $this->_scopeConfig = $scopeConfig;
         $this->_remoteAddress = $remoteAddress;
+        $this->request = $request;
         $this->_skippedAgentList = $skippedUserAgentList;
         $this->_scopeType = $scopeType;
     }
@@ -171,29 +179,11 @@ class Validator implements ValidatorInterface
      */
     protected function _getSessionEnvironment()
     {
-        $parts = [
-            self::VALIDATOR_REMOTE_ADDR_KEY => '',
-            self::VALIDATOR_HTTP_VIA_KEY => '',
-            self::VALIDATOR_HTTP_X_FORWARDED_FOR_KEY => '',
-            self::VALIDATOR_HTTP_USER_AGENT_KEY => '',
+        return [
+            self::VALIDATOR_REMOTE_ADDR_KEY          => (string)$this->_remoteAddress->getRemoteAddress(),
+            self::VALIDATOR_HTTP_VIA_KEY             => (string)$this->request->getServerValue('HTTP_VIA'),
+            self::VALIDATOR_HTTP_X_FORWARDED_FOR_KEY => (string)$this->request->getServerValue('HTTP_X_FORWARDED_FOR'),
+            self::VALIDATOR_HTTP_USER_AGENT_KEY      => (string)$this->request->getServerValue('HTTP_USER_AGENT'),
         ];
-
-        // collect ip data
-        if ($this->_remoteAddress->getRemoteAddress()) {
-            $parts[self::VALIDATOR_REMOTE_ADDR_KEY] = $this->_remoteAddress->getRemoteAddress();
-        }
-        if (isset($_ENV['HTTP_VIA'])) {
-            $parts[self::VALIDATOR_HTTP_VIA_KEY] = (string)$_ENV['HTTP_VIA'];
-        }
-        if (isset($_ENV['HTTP_X_FORWARDED_FOR'])) {
-            $parts[self::VALIDATOR_HTTP_X_FORWARDED_FOR_KEY] = (string)$_ENV['HTTP_X_FORWARDED_FOR'];
-        }
-
-        // collect user agent data
-        if (isset($_SERVER['HTTP_USER_AGENT'])) {
-            $parts[self::VALIDATOR_HTTP_USER_AGENT_KEY] = (string)$_SERVER['HTTP_USER_AGENT'];
-        }
-
-        return $parts;
     }
 }
